@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Método Nilo</string>
+    <string name="nav_dashboard">Painel</string>
+    <string name="nav_edital">Edital</string>
+    <string name="nav_diagnostics">Diagnóstico</string>
+    <string name="nav_revision">Revisão</string>
+    <string name="nav_qconcursos">Questões</string>
+    <string name="auth_title">Método Nilo</string>
+    <string name="auth_subtitle">Metacognição, Edital Estruturado e Inteligência de Desempenho</string>
+    <string name="auth_google_button">Entrar com Google</string>
+</resources>

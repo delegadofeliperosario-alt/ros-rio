@@ -1,0 +1,277 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'studentName', 'targetExam', 'examBoard',
+               'examDateIso', 'dailyGoalQuestions', 'qconcursosLink',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'studentName', 'targetExam', 'examBoard',
+               'examDateIso', 'dailyGoalQuestions', 'qconcursosLink',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+             data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 100 &&
+             data.targetExam is string && data.targetExam.size() <= 140 &&
+             data.examBoard is string && data.examBoard.size() >= 1 && data.examBoard.size() <= 80 &&
+             data.examDateIso is string && data.examDateIso.size() <= 20 &&
+             data.dailyGoalQuestions is int && data.dailyGoalQuestions >= 1 && data.dailyGoalQuestions <= 500 &&
+             data.qconcursosLink is string && data.qconcursosLink.size() <= 400 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidEditalItem(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'editalTitle', 'discipline', 'topic', 'subtopic',
+               'weight', 'orderIndex', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'editalTitle', 'discipline', 'topic', 'subtopic',
+               'weight', 'orderIndex', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+             data.editalTitle is string && data.editalTitle.size() >= 1 && data.editalTitle.size() <= 140 &&
+             data.discipline is string && data.discipline.size() >= 1 && data.discipline.size() <= 120 &&
+             data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 140 &&
+             data.subtopic is string && data.subtopic.size() >= 1 && data.subtopic.size() <= 160 &&
+             data.weight is string && data.weight in ['ALTA', 'MEDIA', 'BAIXA'] &&
+             data.orderIndex is int && data.orderIndex >= 0 && data.orderIndex <= 5000 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidQuestionAttempt(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'qconcursosCode', 'sourceUrl', 'sourceType',
+               'discipline', 'topic', 'subtopic', 'microtopic', 'examBoard',
+               'questionsCount', 'correctCount', 'timeSpentSeconds',
+               'attemptNumber', 'errorCause', 'notes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'qconcursosCode', 'sourceUrl', 'sourceType',
+               'discipline', 'topic', 'subtopic', 'microtopic', 'examBoard',
+               'questionsCount', 'correctCount', 'timeSpentSeconds',
+               'attemptNumber', 'errorCause', 'notes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+             data.qconcursosCode is string && data.qconcursosCode.size() <= 40 &&
+             data.sourceUrl is string && data.sourceUrl.size() <= 400 &&
+             data.sourceType is string &&
+             data.sourceType in ['PORTAL_QCONCURSOS', 'IMPORT_PRINT_IA', 'IMPORT_TEXTO', 'REGISTRO_MANUAL'] &&
+             data.discipline is string && data.discipline.size() >= 1 && data.discipline.size() <= 120 &&
+             data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 140 &&
+             data.subtopic is string && data.subtopic.size() >= 1 && data.subtopic.size() <= 160 &&
+             data.microtopic is string && data.microtopic.size() <= 160 &&
+             data.examBoard is string && data.examBoard.size() >= 1 && data.examBoard.size() <= 80 &&
+             data.questionsCount is int && data.questionsCount >= 1 && data.questionsCount <= 500 &&
+             data.correctCount is int && data.correctCount >= 0 && data.correctCount <= data.questionsCount &&
+             data.timeSpentSeconds is int && data.timeSpentSeconds >= 0 && data.timeSpentSeconds <= 86400 &&
+             data.attemptNumber is int && data.attemptNumber >= 1 && data.attemptNumber <= 50 &&
+             data.errorCause is string &&
+             data.errorCause in ['NONE', 'LACUNA_CONCEITUAL', 'DESATENCAO', 'PEGADINHA_BANCA', 'DUVIDA_ALTERNATIVAS', 'ESQUECIMENTO'] &&
+             data.notes is string && data.notes.size() <= 1000 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidAiDiagnosticReport(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'headline', 'focusDiscipline', 'focusTopic', 'focusSubtopic',
+               'whatIDontKnow', 'whereIAmFailing', 'whyIAmFailing',
+               'whichSubtopicToStudy', 'whatToReviewNow',
+               'legalFoundations', 'jurisprudenceNotes', 'questionsAnalyzed',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'headline', 'focusDiscipline', 'focusTopic', 'focusSubtopic',
+               'whatIDontKnow', 'whereIAmFailing', 'whyIAmFailing',
+               'whichSubtopicToStudy', 'whatToReviewNow',
+               'legalFoundations', 'jurisprudenceNotes', 'questionsAnalyzed',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+             data.headline is string && data.headline.size() >= 1 && data.headline.size() <= 600 &&
+             data.focusDiscipline is string && data.focusDiscipline.size() <= 120 &&
+             data.focusTopic is string && data.focusTopic.size() <= 140 &&
+             data.focusSubtopic is string && data.focusSubtopic.size() <= 160 &&
+             data.whatIDontKnow is string && data.whatIDontKnow.size() <= 2500 &&
+             data.whereIAmFailing is string && data.whereIAmFailing.size() <= 2500 &&
+             data.whyIAmFailing is string && data.whyIAmFailing.size() <= 2500 &&
+             data.whichSubtopicToStudy is string && data.whichSubtopicToStudy.size() <= 2500 &&
+             data.whatToReviewNow is string && data.whatToReviewNow.size() <= 2500 &&
+             data.legalFoundations is list && data.legalFoundations.size() <= 15 &&
+             (data.legalFoundations.size() == 0 || (data.legalFoundations[0] is string && data.legalFoundations[0].size() <= 300)) &&
+             data.jurisprudenceNotes is list && data.jurisprudenceNotes.size() <= 15 &&
+             (data.jurisprudenceNotes.size() == 0 || (data.jurisprudenceNotes[0] is string && data.jurisprudenceNotes[0].size() <= 300)) &&
+             data.questionsAnalyzed is int && data.questionsAnalyzed >= 0 && data.questionsAnalyzed <= 100000 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidRevisionTask(data, userId) {
+      return data.keys().hasAll([
+               'userId', 'orderIndex', 'priority', 'discipline', 'topic', 'subtopic',
+               'rationale', 'studyActions', 'legalReferences', 'estimatedMinutes',
+               'targetQuestions', 'completed', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'orderIndex', 'priority', 'discipline', 'topic', 'subtopic',
+               'rationale', 'studyActions', 'legalReferences', 'estimatedMinutes',
+               'targetQuestions', 'completed', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId == request.auth.uid && data.userId == userId &&
+             data.orderIndex is int && data.orderIndex >= 0 && data.orderIndex <= 200 &&
+             data.priority is string && data.priority in ['CRITICA', 'ALTA', 'MEDIA', 'MANUTENCAO'] &&
+             data.discipline is string && data.discipline.size() >= 1 && data.discipline.size() <= 120 &&
+             data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 140 &&
+             data.subtopic is string && data.subtopic.size() >= 1 && data.subtopic.size() <= 160 &&
+             data.rationale is string && data.rationale.size() >= 1 && data.rationale.size() <= 1000 &&
+             data.studyActions is string && data.studyActions.size() >= 1 && data.studyActions.size() <= 1500 &&
+             data.legalReferences is string && data.legalReferences.size() <= 1000 &&
+             data.estimatedMinutes is int && data.estimatedMinutes >= 5 && data.estimatedMinutes <= 480 &&
+             data.targetQuestions is int && data.targetQuestions >= 0 && data.targetQuestions <= 200 &&
+             data.completed is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'studentName', 'targetExam', 'examBoard', 'examDateIso',
+                         'dailyGoalQuestions', 'qconcursosLink', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /edital_items/{itemId} {
+        allow get: if isOwner(userId) && isValidId(itemId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(itemId) &&
+                         isValidEditalItem(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(itemId) &&
+                         isValidEditalItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'editalTitle', 'discipline', 'topic', 'subtopic',
+                           'weight', 'orderIndex', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(itemId);
+      }
+
+      match /question_attempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(attemptId) &&
+                         isValidQuestionAttempt(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(attemptId) &&
+                         isValidQuestionAttempt(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().sourceType == existing().sourceType &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'qconcursosCode', 'sourceUrl', 'discipline', 'topic',
+                           'subtopic', 'microtopic', 'examBoard', 'questionsCount',
+                           'correctCount', 'timeSpentSeconds', 'attemptNumber',
+                           'errorCause', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(attemptId);
+      }
+
+      match /ai_diagnostics/{diagnosticId} {
+        allow get: if isOwner(userId) && isValidId(diagnosticId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(diagnosticId) &&
+                         isValidAiDiagnosticReport(incoming(), userId);
+
+        allow update: if false;
+
+        allow delete: if isOwner(userId) && isValidId(diagnosticId);
+      }
+
+      match /revision_tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(taskId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         isValidRevisionTask(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(taskId) &&
+                         isValidRevisionTask(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt && (
+                           incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']) ||
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'orderIndex', 'priority', 'rationale', 'studyActions',
+                             'legalReferences', 'estimatedMinutes', 'targetQuestions',
+                             'completed', 'updatedAt'
+                           ])
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Método Nilo",
+  "description": "Plataforma inteligente de estudos fundamentada em metacognição e autorregulação para concursos públicos, com cadastro e leitura de edital por IA, integração ao QConcursos, mapa inteligente de desempenho e acessibilidade WCAG AA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

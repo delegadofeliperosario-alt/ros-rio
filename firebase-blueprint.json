@@ -1,0 +1,175 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Student study profile, target exam configuration, and QConcursos portal link.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "studentName": { "type": "string", "description": "Student display name used in personalized mentor diagnoses." },
+        "targetExam": { "type": "string", "description": "Target civil service exam or role." },
+        "examBoard": { "type": "string", "description": "Primary exam board (e.g., Cebraspe, FGV, FCC)." },
+        "examDateIso": { "type": "string", "description": "Target exam date in YYYY-MM-DD format." },
+        "dailyGoalQuestions": { "type": "integer", "description": "Daily target number of solved questions." },
+        "qconcursosLink": { "type": "string", "description": "Saved QConcursos URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": [
+        "userId",
+        "studentName",
+        "targetExam",
+        "examBoard",
+        "examDateIso",
+        "dailyGoalQuestions",
+        "qconcursosLink",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EditalItem": {
+      "title": "EditalItem",
+      "description": "Hierarchical syllabus node from the student's registered or uploaded exam notice (Edital).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "editalTitle": { "type": "string", "description": "Name of the exam notice (e.g., Delegado PC-SP 2026)." },
+        "discipline": { "type": "string", "description": "Discipline from the Edital." },
+        "topic": { "type": "string", "description": "Main subject/topic from the Edital." },
+        "subtopic": { "type": "string", "description": "Specific subtopic from the Edital." },
+        "weight": {
+          "type": "string",
+          "enum": ["ALTA", "MEDIA", "BAIXA"],
+          "description": "Relative exam weight or importance of this syllabus item."
+        },
+        "orderIndex": { "type": "integer", "description": "Display ordering index inside the Edital hierarchy." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": [
+        "userId",
+        "editalTitle",
+        "discipline",
+        "topic",
+        "subtopic",
+        "weight",
+        "orderIndex",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "QuestionAttempt": {
+      "title": "QuestionAttempt",
+      "description": "Solved question or imported performance batch linked to QConcursos and Edital taxonomy.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "qconcursosCode": { "type": "string", "description": "Optional QConcursos question identifier." },
+        "sourceUrl": { "type": "string", "description": "Optional QConcursos URL." },
+        "sourceType": {
+          "type": "string",
+          "enum": ["PORTAL_QCONCURSOS", "IMPORT_PRINT_IA", "IMPORT_TEXTO", "REGISTRO_MANUAL"]
+        },
+        "discipline": { "type": "string" },
+        "topic": { "type": "string" },
+        "subtopic": { "type": "string" },
+        "microtopic": { "type": "string" },
+        "examBoard": { "type": "string" },
+        "questionsCount": { "type": "integer" },
+        "correctCount": { "type": "integer" },
+        "timeSpentSeconds": { "type": "integer" },
+        "attemptNumber": { "type": "integer" },
+        "errorCause": {
+          "type": "string",
+          "enum": ["NONE", "LACUNA_CONCEITUAL", "DESATENCAO", "PEGADINHA_BANCA", "DUVIDA_ALTERNATIVAS", "ESQUECIMENTO"]
+        },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "qconcursosCode", "sourceUrl", "sourceType",
+        "discipline", "topic", "subtopic", "microtopic", "examBoard",
+        "questionsCount", "correctCount", "timeSpentSeconds",
+        "attemptNumber", "errorCause", "notes", "createdAt", "updatedAt"
+      ]
+    },
+    "AiDiagnosticReport": {
+      "title": "AiDiagnosticReport",
+      "description": "AI-generated metacognitive pedagogical diagnostic snapshot.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "headline": { "type": "string" },
+        "focusDiscipline": { "type": "string" },
+        "focusTopic": { "type": "string" },
+        "focusSubtopic": { "type": "string" },
+        "whatIDontKnow": { "type": "string" },
+        "whereIAmFailing": { "type": "string" },
+        "whyIAmFailing": { "type": "string" },
+        "whichSubtopicToStudy": { "type": "string" },
+        "whatToReviewNow": { "type": "string" },
+        "legalFoundations": { "type": "array" },
+        "jurisprudenceNotes": { "type": "array" },
+        "questionsAnalyzed": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "headline", "focusDiscipline", "focusTopic", "focusSubtopic",
+        "whatIDontKnow", "whereIAmFailing", "whyIAmFailing",
+        "whichSubtopicToStudy", "whatToReviewNow",
+        "legalFoundations", "jurisprudenceNotes", "questionsAnalyzed",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "RevisionTask": {
+      "title": "RevisionTask",
+      "description": "Prioritized self-regulated revision plan item.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "orderIndex": { "type": "integer" },
+        "priority": { "type": "string", "enum": ["CRITICA", "ALTA", "MEDIA", "MANUTENCAO"] },
+        "discipline": { "type": "string" },
+        "topic": { "type": "string" },
+        "subtopic": { "type": "string" },
+        "rationale": { "type": "string" },
+        "studyActions": { "type": "string" },
+        "legalReferences": { "type": "string" },
+        "estimatedMinutes": { "type": "integer" },
+        "targetQuestions": { "type": "integer" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "orderIndex", "priority", "discipline", "topic", "subtopic",
+        "rationale", "studyActions", "legalReferences", "estimatedMinutes",
+        "targetQuestions", "completed", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Student profile and exam configuration owned exclusively by {userId}."
+    },
+    "/users/{userId}/edital_items/{itemId}": {
+      "schema": { "$ref": "#/entities/EditalItem" },
+      "description": "Hierarchical syllabus items registered or extracted from the student's Edital."
+    },
+    "/users/{userId}/question_attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuestionAttempt" },
+      "description": "Granular solved question and imported QConcursos performance records."
+    },
+    "/users/{userId}/ai_diagnostics/{diagnosticId}": {
+      "schema": { "$ref": "#/entities/AiDiagnosticReport" },
+      "description": "Historical AI pedagogical diagnostic reports."
+    },
+    "/users/{userId}/revision_tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/RevisionTask" },
+      "description": "Smart adaptive revision plan tasks."
+    }
+  }
+}
